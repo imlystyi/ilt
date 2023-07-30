@@ -215,7 +215,7 @@ relationship with you.
         self.stdout.write('''*** Summary:
     Automatically inserts the license text into files in the specified root folder.
 *** Format: 
-    autoins <license_name> "<path>" <year> <copyright_holder> <special_line> <ignored_exts> <keys>
+    auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_exts>" <keys>
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder - must be in double quotes;
@@ -356,9 +356,9 @@ relationship with you.
     Inserts the license text into the specified file or files with the specified extension.
 *** Format: 
     * inserting into a specified file:
-        special <license_name> "<path>" "<comments_format>" <year> <copyright_holder> <special_line>
+        special <license_name> "<path>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
     * inserting into the files with the specified extension:
-        special <license_name> "<path>"" "<ext>" "<comments_format>" <year> <copyright_holder> <special_line>
+        special <license_name> "<path>"" "<ext>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder or to the specified file - must be in double quotes;
