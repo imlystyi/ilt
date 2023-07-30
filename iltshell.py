@@ -158,14 +158,14 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
 
                 if self._NO_FILES_LIST_KEY not in keys:
                     self.result('List of formatted files: ', self._MessageType.NO_JAW)
-                    self._print_items(success)
+                    self._display_items(success)
             else:
                 self.result('ilt could not find any matching files.', self._MessageType.WARNING)
 
             if self._NO_UNKNOWN_EXT_LIST_KEY not in keys and len(unknown_exts) > 0:
                 self.result('ilt encountered unknown extensions.', self._MessageType.WARNING)
                 self.result('List of unknown extensions: ', self._MessageType.NO_JAW)
-                self._print_items(unknown_exts, True)
+                self._display_items(unknown_exts)
 
             return
         except FileException as exception:
@@ -177,7 +177,7 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
         Displays help to "auto" command.
 
         """
-        self.stdout.write("""*** Summary:
+        self.stdout.write('''*** Summary:
     Automatically inserts the license text into files in the specified root folder.
 *** Format: 
     autoins <license_name> "<path>" <year> <copyright_holder> <special_line> <ignored_exts> <keys>
@@ -198,7 +198,7 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
     * without ignored extensions (with keys):
         auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" -c -s
     * with ignored extensions (without keys):
-        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" ".js .c .cpp"\n""")
+        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" ".js .c .cpp"\n''')
 
     def do_exit(self, args: str) -> None:
         """
@@ -237,7 +237,7 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
             self.default('This command has no keys.', self._MessageType.ERROR)
             return
         else:
-            self._print_items(lib.LICENSES)
+            self._display_items(lib.LICENSES)
 
     def help_licenses(self) -> None:
         """
@@ -303,7 +303,7 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
 
                     if self._NO_FILES_LIST_KEY not in keys:
                         self.result('List of formatted files: ', self._MessageType.NO_JAW)
-                        self._print_items(success)
+                        self._display_items(success)
                 else:
                     self.result('ilt could not find files with the specified extension.', self._MessageType.WARNING)
 
@@ -317,7 +317,7 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
         Displays help to "special" command.
 
         """
-        self.stdout.write("""*** Summary:
+        self.stdout.write('''*** Summary:
     Inserts the license text into the specified file or files with the specified extension.
 *** Format: 
     * inserting into a specified file:
@@ -340,15 +340,11 @@ Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
     * inserting into a specified file:
         special lgpl "C:\\Code" ".py" "#" 2023 "imlystyi" "ilt - insert license text!"
     * inserting into the files with the specified extension:
-        special lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"\n""")
+        special lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"\n''')
 
-    def _print_items(self, items: list, is_horizontally=False):
-        if is_horizontally:
-            self.stdout.write(*items)
-            self.stdout.write('\n')
-        else:
-            for item in items:
-                self.stdout.write(item + '\n')
+    def _display_items(self, items: list):
+        for item in items:
+            self.stdout.write(item + '\n')
 
     def _get_keys(self, args: str) -> list[str]:
         return [kk for kk in args.split() if kk[0] == '-']
