@@ -22,11 +22,30 @@ class Shell(Cmd):
     ruler = '-'
     about = f"""
 About application
-{ruler * 74}
-ilt - insert license text!
-This application can help you quickly insert license text into your files.
-Version 1.
-Copyright (c) 2023 imlystyi, licensed by GPL-3.0.
+{ruler * 100}
+ilt  Copyright (C) 2023  imlystyi
+This program comes with ABSOLUTELY NO WARRANTY; for details see a1.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see a2 for details.
+
+a1.
+THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. 
+EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES 
+PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE 
+PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF 
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+a2.
+You may make, run and propagate covered works that you do not convey, without conditions so 
+long as your license otherwise remains in force. You may convey covered works to others for 
+the sole purpose of having them make modifications exclusively for you, or provide you with 
+facilities for running those works, provided that you comply with the terms of this License 
+in conveying all material for which you do not control copyright. Those thus making or running 
+the covered works for you must do so exclusively on your behalf, under your direction and control,
+on terms that prohibit them from making any copies of your copyrighted material outside their 
+relationship with you.
     """
     intro = 'Welcome to ilt v1.\nType "help" to list commands.\n'
     nohelp = '[ERROR] There is no help on %s.'
