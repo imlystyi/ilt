@@ -317,7 +317,7 @@ relationship with you.
                 year = params[5]
                 copyright_owner = params[6]
                 special_line = params[7]
-            case value if value < 7:
+            case value if value < 6:
                 self.default('Too few parameters.', self._MessageType.ERROR)
                 return
             case value if value > 8:
