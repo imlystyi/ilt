@@ -63,7 +63,7 @@ the covered works for you must do so exclusively on your behalf, under your dire
 on terms that prohibit them from making any copies of your copyrighted material outside their 
 relationship with you.
     """
-    intro = 'Welcome to ilt v1.\nType "help" to list commands.\n'
+    intro = 'Welcome to ilt v2.\nType "help" to list commands.\n'
     nohelp = '[ERROR] There is no help on %s.'
     prompt = '> '
 
@@ -155,25 +155,28 @@ relationship with you.
 
         license_name, path, year, copyright_owner, special_line = '', '', '', '', ''
         ignored_exts = []
+        ignored_folders = []
 
         match len(params):
-            case 5:  # No ignored extensions.
+            case 6:  # No ignored extensions.
                 license_name = params[0]
                 path = params[1]
                 year = params[2]
                 copyright_owner = params[3]
                 special_line = params[4]
-            case 6:  # Ignored extensions exist.
+                ignored_folders = self._get_ignored_folders(params[5])
+            case 7:  # Ignored extensions exist.
                 license_name = params[0]
                 path = params[1]
                 year = params[2]
                 copyright_owner = params[3]
                 special_line = params[4]
-                ignored_exts = self._get_ignored_exts(params[5])
-            case value if value < 5:
+                ignored_folders = self._get_ignored_folders(params[5])
+                ignored_exts = self._get_ignored_exts(params[6])
+            case value if value < 6:
                 self.default('Too few parameters.', self._MessageType.ERROR)
                 return
-            case value if value > 6:
+            case value if value > 7:
                 self.default('Too many parameters.', self._MessageType.ERROR)
                 return
             case _:
@@ -186,7 +189,7 @@ relationship with you.
             return
 
         try:
-            success, unknown_exts = lib.auto_insert(license_text, path, ignored_exts)
+            success, unknown_exts = lib.auto_insert(license_text, path, ignored_exts, ignored_folders)
 
             if len(success) > 0:
                 self.result('ilt has done inserting license texts.', self._MessageType.SUCCESS)
@@ -215,7 +218,7 @@ relationship with you.
         self.stdout.write('''*** Summary:
     Automatically inserts the license text into files in the specified root folder.
 *** Format: 
-    auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_exts>" <keys>
+    auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_folders>" "<ignored_exts>" <keys>
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder - must be in double quotes;
@@ -224,16 +227,18 @@ relationship with you.
     <copyright_holder>: copyright holder name to be inserted into the license text. - must be double-quoted. Enter empty 
     quotes ("") if you don't need it;
     <special_line>: special line to be inserted into the license text. Enter empty quotes ("") if you don't need it;
+    <ignored_folders>: folders to ignore. Ignores the subfolders too. Must be separated by space. 
+    Enter empty quotes ("") if you don't need it;
     <ignored_exts> (optionally): list of file extensions that will not be formatted - must be in double quotes. Each 
     extension is separated by a space.
 *** Keys:
     -e: will not list unknown extensions at the end;
     -f: will not list formatted files at the end.
 *** Example:
-    * without ignored extensions (with keys):
-        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" -c -s
-    * with ignored extensions (without keys):
-        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" ".js .c .cpp"\n''')
+    * without ignored extensions and folders (with keys):
+        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" "" -c -s
+    * with ignored extensions and folders (without keys):
+        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" "node_modules src" ".js .c .cpp"\n''')
 
     def do_exit(self, args: str) -> None:
         """
@@ -293,6 +298,7 @@ relationship with you.
             self.default('Incorrect keys.', self._MessageType.ERROR)
 
         license_name, path, ext, comment, year, copyright_owner, special_line = '', '', '', '', '', '', ''
+        ignored_folders = []
 
         match len(params):
             case 6:  # Specified file inserting.
@@ -302,18 +308,19 @@ relationship with you.
                 year = params[3]
                 copyright_owner = params[4]
                 special_line = params[5]
-            case 7:  # Specified extension inserting.
+            case 8:  # Specified extension inserting.
                 license_name = params[0]
                 path = params[1]
-                ext = params[2]
-                comment = params[3]
-                year = params[4]
-                copyright_owner = params[5]
-                special_line = params[6]
+                ignored_folders = self._get_ignored_folders(params[2])
+                ext = params[3]
+                comment = params[4]
+                year = params[5]
+                copyright_owner = params[6]
+                special_line = params[7]
             case value if value < 6:
                 self.default('Too few parameters.', self._MessageType.ERROR)
                 return
-            case value if value > 7:
+            case value if value > 8:
                 self.default('Too many parameters.', self._MessageType.ERROR)
                 return
             case _:
@@ -331,7 +338,7 @@ relationship with you.
                 self.result('ilt has done inserting license text.', self._MessageType.SUCCESS)
                 return
             else:
-                success = lib.special_ext_insert(license_text, path, ext, comment)
+                success = lib.special_ext_insert(license_text, path, ext, comment, ignored_folders)
 
                 if len(success) > 0:
                     self.result('ilt has done inserting license text.', self._MessageType.SUCCESS)
@@ -358,10 +365,13 @@ relationship with you.
     * inserting into a specified file:
         special <license_name> "<path>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
     * inserting into the files with the specified extension:
-        special <license_name> "<path>"" "<ext>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
+        special <license_name> "<path>" "<ignored_folders>" "<ext>" "<comments_format>" 
+        <year> "<copyright_holder>" "<special_line>"
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder or to the specified file - must be in double quotes;
+    <ignored_folders>: folders to ignore. Ignores the subfolders too. Must be separated by space. 
+    Enter empty quotes ("") if you don't need it;
     <ext>: specified file extension - must be in double quotes;
     <comments_format>: comment format in this file or files with the specified extension - must be in double quotes;
     <year>: year to be inserted in the license text - must be without quotes. Enter 0 if you don't 
@@ -373,9 +383,9 @@ relationship with you.
     -f: will not list formatted files at the end.
 *** Example:
     * inserting into a specified file:
-        special lgpl "C:\\Code" ".py" "#" 2023 "imlystyi" "ilt - insert license text!"
+        special lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"
     * inserting into the files with the specified extension:
-        special lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"\n''')
+        special lgpl "C:\\Code" "" ".py" "#" 2023 "imlystyi" "ilt - insert license text!"\n''')
 
     def _display_items(self, items: list):
         for item in items:
@@ -391,5 +401,8 @@ relationship with you.
 
     def _get_ignored_exts(self, exts: str) -> list[str]:
         return exts.split(' ')
+
+    def _get_ignored_folders(self, folders: str) -> list[str]:
+        return folders.split(' ')
 
     # endregion

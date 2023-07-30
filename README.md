@@ -24,11 +24,18 @@ If you license your program, **ilt** will help you insert the text (header) of t
 
 ## How can I use it?
 - If you want to do automatic insertion, use this command:
-`auto <license_name> "<path_to_root_folder>" <year> <copyright_holder_name> <special_line> <ignored_exts> <keys>`
+```
+auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_folders>" "<ignored_exts>" <keys>
+```
+
 - If you want to do special insertion into the specified file, use this command:
-`special <license_name> "<path_to_file>" "<comments_format>" <year> <copyright_holder> <special_line>`
+```
+special <license_name> "<path_to_file>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
+```
 - If you want to do special insertion into the files with the specified extension, use this command:
-`special <license_name> "<path_to_root_folder>"" "<extension>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"`
+```
+special <license_name> "<path_to_root_folder>" "ignored_folders" "<extension>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
+```
 - **Use the `help` command to view detailed help for all commands.**
 
 ## Avaliable licenses (and their texts)
