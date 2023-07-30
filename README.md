@@ -20,7 +20,7 @@ If you license your program, **ilt** will help you insert the text (header) of t
  
  ## Functionality
  - Automatic insertion of license texts into source code files (if the extension of such a file and the format of comments are known by **ilt**)
- - Special insertion if you want to change startline format (or if the extension of such a file and the format of comments aren't known by **ilt**
+ - Special insertion if you want to change startline format (or if the extension of such a file and the format of comments aren't known by **ilt**)
 
 ## How can I use it?
 - If you want to do automatic insertion, use this command:
