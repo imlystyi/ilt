@@ -33,17 +33,19 @@ List of licenses that are currently available in ilt "auto" mode.
 
 # region Methods
 
-def auto_insert(license_text: str, root: str, ignored_exts: list[str]) -> (list[str], list[str]):
+def auto_insert(license_text: str, root: str, ignored_exts: list[str], ignored_folders: list[str]) \
+        -> (list[str], list[str]):
     """
     Automatically inserts the specified license text into the specified files.
     :param license_text: Specified license text to be inserted into the files.
     :param root: Path to the root folder.
     :param ignored_exts: List of ignored file extensions.
+    :param ignored_folders: List of ignored folders.
     :return: Tuple pair from the list of successfully formatted files and the list of unknown extensions list.
 
     """
     root = _get_correct_path(root)
-    files = _get_files(root)
+    files = _get_files(root, ignored_folders)
     success, unknown_exts = [], []
 
     for file in files:
@@ -110,18 +112,20 @@ def get_license_text(license_name: str, year='', copyright_holder='', special_li
     return license_text
 
 
-def special_ext_insert(license_text: str, root: str, searched_ext: list[str], comment: str) -> list[str]:
+def special_ext_insert(license_text: str, root: str,
+                       searched_ext: list[str], comment: str, ignored_folders: list[str]) -> list[str]:
     """
     Inserts the specified license text into files with the specified extension and comment format.
     :param license_text: Specified license text to be inserted into the files.
     :param root: Path to the root folder.
     :param searched_ext: List of searched file extensions.
     :param comment: Comment format in files with the searched extension.
+    :param ignored_folders: List of ignored folders.
     :return: List of successfully formatted files.
 
     """
     root = _get_correct_path(root)
-    files = _get_files(root)
+    files = _get_files(root, ignored_folders)
     success = []
 
     for file in files:
@@ -180,7 +184,7 @@ def _get_correct_path(path: str) -> str:
     return path.replace('/', '\\')
 
 
-def _get_files(path: str) -> list[str]:
+def _get_files(path: str, ignored_folders: list[str] = None) -> list[str]:
     if not isdir(path):
         raise FileException('Invalid path.')
     else:
@@ -188,7 +192,13 @@ def _get_files(path: str) -> list[str]:
 
         for dirpath, dirnames, filenames in walk(path):
             for name in filenames:
-                files.append(join(dirpath, name))
+                if ignored_folders is None:
+                    files.append(join(dirpath, name))
+                else:
+                    for _ in ignored_folders:
+                        # finding the last occurrence in the path
+                        if dirpath.rfind(_) == -1:
+                            files.append(join(dirpath, name))
 
         return files
 
