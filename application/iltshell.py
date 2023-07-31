@@ -32,8 +32,12 @@ class Shell(Cmd):
 
     # region Fields
 
-    _NO_UNKNOWN_EXT_LIST_KEY = '-e'
+    _IGNORE_DIRS_KEY = '-d'
+    _IGNORE_EXTS_KEY = '-e'
+    _NO_UNKNOWN_EXTS_LIST_KEY = '-u'
     _NO_FILES_LIST_KEY = '-f'
+    _SPECIAL_EXTS_MODE = 'ext'
+    _SPECIAL_FILE_MODE = 'file'
 
     ruler = '-'
     about = f"""
@@ -61,8 +65,8 @@ facilities for running those works, provided that you comply with the terms of t
 in conveying all material for which you do not control copyright. Those thus making or running 
 the covered works for you must do so exclusively on your behalf, under your direction and control,
 on terms that prohibit them from making any copies of your copyrighted material outside their 
-relationship with you.
-    """
+relationship with you.\n
+"""
     intro = 'Welcome to ilt v2.\nType "help" to list commands.\n'
     nohelp = '[ERROR] There is no help on %s.'
     prompt = '> '
@@ -114,6 +118,8 @@ relationship with you.
             case _:
                 self.stdout.write(f'[ERROR] Unexpected message.\n')
 
+        return
+
     def help_help(self) -> None:
         """
         Displays help to "help" command.
@@ -133,7 +139,7 @@ relationship with you.
         elif len(keys) > 0:
             self.default('This command has no keys.', self._MessageType.ERROR)
         else:
-            print(self.about)
+            self.stdout.write(self.about)
 
     def help_about(self):
         """
@@ -148,30 +154,40 @@ relationship with you.
 
         """
         params, keys = self._get_params_(args), self._get_keys(args)
-        allowed_keys = self._NO_FILES_LIST_KEY, self._NO_UNKNOWN_EXT_LIST_KEY
+        allowed_keys = self._IGNORE_DIRS_KEY, self._IGNORE_EXTS_KEY, \
+            self._NO_FILES_LIST_KEY, self._NO_UNKNOWN_EXTS_LIST_KEY
 
         if any(key not in allowed_keys for key in keys):
             self.default('Incorrect keys.', self._MessageType.ERROR)
 
         license_name, path, year, copyright_owner, special_line = '', '', '', '', ''
-        ignored_exts = []
-        ignored_folders = []
+        ignored_exts = None
+        ignored_dirs = None
 
         match len(params):
-            case 6:  # No ignored extensions.
+            case 5:  # No ignored extensions/directories.
                 license_name = params[0]
                 path = params[1]
                 year = params[2]
                 copyright_owner = params[3]
                 special_line = params[4]
-                ignored_folders = self._get_ignored_folders(params[5])
-            case 7:  # Ignored extensions exist.
+            case 6:  # Ignored extensions or directories exist (one thing).
                 license_name = params[0]
                 path = params[1]
                 year = params[2]
                 copyright_owner = params[3]
                 special_line = params[4]
-                ignored_folders = self._get_ignored_folders(params[5])
+                if self._IGNORE_DIRS_KEY in keys and len(params) == 6:
+                    ignored_dirs = self._get_ignored_dirs(params[5])
+                elif self._IGNORE_EXTS_KEY in keys and len(params) == 6:
+                    ignored_exts = self._get_ignored_exts(params[5])
+            case 7:  # Ignored extensions and directories exist (both).
+                license_name = params[0]
+                path = params[1]
+                year = params[2]
+                copyright_owner = params[3]
+                special_line = params[4]
+                ignored_dirs = self._get_ignored_dirs(params[5])
                 ignored_exts = self._get_ignored_exts(params[6])
             case value if value < 6:
                 self.default('Too few parameters.', self._MessageType.ERROR)
@@ -179,8 +195,6 @@ relationship with you.
             case value if value > 7:
                 self.default('Too many parameters.', self._MessageType.ERROR)
                 return
-            case _:
-                self.default('Incorrect parameters number.', self._MessageType.ERROR)
 
         try:
             license_text = lib.get_license_text(license_name, year, copyright_owner, special_line)
@@ -189,7 +203,7 @@ relationship with you.
             return
 
         try:
-            success, unknown_exts = lib.auto_insert(license_text, path, ignored_exts, ignored_folders)
+            success, unknown_exts = lib.auto_insert(license_text, path, ignored_exts, ignored_dirs)
 
             if len(success) > 0:
                 self.result('ilt has done inserting license texts.', self._MessageType.SUCCESS)
@@ -200,7 +214,7 @@ relationship with you.
             else:
                 self.result('ilt could not find any matching files.', self._MessageType.WARNING)
 
-            if self._NO_UNKNOWN_EXT_LIST_KEY not in keys and len(unknown_exts) > 0:
+            if self._NO_UNKNOWN_EXTS_LIST_KEY not in keys and len(unknown_exts) > 0:
                 self.result('ilt encountered unknown extensions.', self._MessageType.WARNING)
                 self.result('List of unknown extensions: ', self._MessageType.NO_JAW)
                 self._display_items(unknown_exts)
@@ -218,7 +232,7 @@ relationship with you.
         self.stdout.write('''*** Summary:
     Automatically inserts the license text into files in the specified root folder.
 *** Format: 
-    auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_folders>" "<ignored_exts>" <keys>
+    auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_dirs>" "<ignored_exts>" <keys>
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder - must be in double quotes;
@@ -227,18 +241,20 @@ relationship with you.
     <copyright_holder>: copyright holder name to be inserted into the license text. - must be double-quoted. Enter empty 
     quotes ("") if you don't need it;
     <special_line>: special line to be inserted into the license text. Enter empty quotes ("") if you don't need it;
-    <ignored_folders>: folders to ignore. Ignores the subfolders too. Must be separated by space. 
-    Enter empty quotes ("") if you don't need it;
-    <ignored_exts> (optionally): list of file extensions that will not be formatted - must be in double quotes. Each 
-    extension is separated by a space.
+    <ignored_dirs> (optionally, enter the "-d" key): list of directories files in that will not be formatted - 
+    must be in double quotes. Ignores the subdirectories too. Each directory name must be separated by a space.
+    <ignored_exts> (optionally, enter the "-e" key): list of file extensions that will not be formatted - 
+    must be in double quotes. Each extension must be separated by a space.
 *** Keys:
-    -e: will not list unknown extensions at the end;
+    -d: enable directories ignoring;
+    -e: enable extensions ignoring;
+    -u: will not list unknown extensions at the end;
     -f: will not list formatted files at the end.
 *** Example:
-    * without ignored extensions and folders (with keys):
-        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" "" -c -s
-    * with ignored extensions and folders (without keys):
-        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" "node_modules src" ".js .c .cpp"\n''')
+    * without ignored directories and files (with "-c" and "-s" keys):
+        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" -c -s
+    * with ignored directories and files (with "-d" and "-e" keys and ignored directories and extensions):
+        auto lgpl "C:\\Code" 2023 "imlystyi" "ilt - insert license text!" ".idea tsProj" ".js .c .cpp" -d -e\n''')
 
     def do_exit(self, args: str) -> None:
         """
@@ -292,39 +308,50 @@ relationship with you.
 
         """
         params, keys = self._get_params_(args), self._get_keys(args)
-        allowed_key = self._NO_FILES_LIST_KEY
+        allowed_mods = self._SPECIAL_EXTS_MODE, self._SPECIAL_FILE_MODE
+        allowed_keys = self._IGNORE_DIRS_KEY, self._NO_FILES_LIST_KEY
 
-        if any(key != allowed_key for key in keys):
+        if any(key not in allowed_keys for key in keys):
             self.default('Incorrect keys.', self._MessageType.ERROR)
 
         license_name, path, ext, comment, year, copyright_owner, special_line = '', '', '', '', '', '', ''
-        ignored_folders = []
+        ignored_dirs = None
 
-        match len(params):
-            case 6:  # Specified file inserting.
-                license_name = params[0]
-                path = params[1]
-                comment = params[2]
-                year = params[3]
-                copyright_owner = params[4]
-                special_line = params[5]
-            case 8:  # Specified extension inserting.
-                license_name = params[0]
-                path = params[1]
-                ignored_folders = self._get_ignored_folders(params[2])
-                ext = params[3]
-                comment = params[4]
-                year = params[5]
-                copyright_owner = params[6]
-                special_line = params[7]
-            case value if value < 6:
-                self.default('Too few parameters.', self._MessageType.ERROR)
-                return
-            case value if value > 8:
-                self.default('Too many parameters.', self._MessageType.ERROR)
-                return
-            case _:
-                self.default('Incorrect parameters number.', self._MessageType.ERROR)
+        mode = params[0]
+
+        if mode not in allowed_mods:
+            self.default('Incorrect mode.')
+
+        match mode:
+            case self._SPECIAL_EXTS_MODE:
+                if len(params) < 8:
+                    self.default('Too few parameters.', self._MessageType.ERROR)
+                    return
+                elif len(params) > 9:
+                    self.default('Too many parameters.', self._MessageType.ERROR)
+                    return
+                else:
+                    license_name = params[1]
+                    path = params[2]
+                    ext = params[3]
+                    comment = params[4]
+                    year = params[5]
+                    copyright_owner = params[6]
+                    special_line = params[7]
+
+                    if self._IGNORE_DIRS_KEY in keys and len(params) > 9:
+                        ignored_dirs = self._get_ignored_dirs(params[8])
+            case self._SPECIAL_FILE_MODE:
+                if len(params) < 7:
+                    self.default('Too few parameters.', self._MessageType.ERROR)
+                elif len(params) > 7:
+                    self.default('Too many parameters.', self._MessageType.ERROR)
+                license_name = params[1]
+                path = params[2]
+                comment = params[3]
+                year = params[4]
+                copyright_owner = params[5]
+                special_line = params[6]
 
         try:
             license_text = lib.get_license_text(license_name, year, copyright_owner, special_line)
@@ -333,12 +360,12 @@ relationship with you.
             return
 
         try:
-            if ext == '':
+            if mode == self._SPECIAL_FILE_MODE:
                 _ = lib.special_file_insert(license_text, path, comment)
                 self.result('ilt has done inserting license text.', self._MessageType.SUCCESS)
                 return
             else:
-                success = lib.special_ext_insert(license_text, path, ext, comment, ignored_folders)
+                success = lib.special_ext_insert(license_text, path, ext, comment, ignored_dirs)
 
                 if len(success) > 0:
                     self.result('ilt has done inserting license text.', self._MessageType.SUCCESS)
@@ -351,7 +378,7 @@ relationship with you.
 
                 return
         except FileException as exception:
-            self.default(exception.message)
+            self.default(exception.message, self._MessageType.ERROR)
             return
 
     def help_special(self) -> None:
@@ -363,15 +390,13 @@ relationship with you.
     Inserts the license text into the specified file or files with the specified extension.
 *** Format: 
     * inserting into a specified file:
-        special <license_name> "<path>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
+        special file <license_name> "<path>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
     * inserting into the files with the specified extension:
-        special <license_name> "<path>" "<ignored_folders>" "<ext>" "<comments_format>" 
-        <year> "<copyright_holder>" "<special_line>"
+        special ext <license_name> "<path>" "<ext>" "<comments_format>" <year> "<copyright_holder>" "<special_line>" 
+        "<ignored_folders>"
 *** Parameters:
     <license_name>: license name - must be without quotes. Enter "licenses" to display all licenses;
     <path>: path to the root folder or to the specified file - must be in double quotes;
-    <ignored_folders>: folders to ignore. Ignores the subfolders too. Must be separated by space. 
-    Enter empty quotes ("") if you don't need it;
     <ext>: specified file extension - must be in double quotes;
     <comments_format>: comment format in this file or files with the specified extension - must be in double quotes;
     <year>: year to be inserted in the license text - must be without quotes. Enter 0 if you don't 
@@ -379,17 +404,29 @@ relationship with you.
     <copyright_holder>: copyright holder name to be inserted into the license text. - must be double-quoted. Enter empty 
     quotes ("") if you don't need it;
     <special_line>: special line to be inserted into the license text. Enter empty quotes ("") if you don't need it.
+    <ignored_dirs> (optionally, enter the "-d" key): list of directories files in that will not be formatted - 
+    must be in double quotes. Ignores the subdirectories too. Each directory name must be separated by a space.
 *** Keys:
-    -f: will not list formatted files at the end.
+    -d: enable directories ignoring;
+    -f: will not list formatted files at the end;
+    -u: will not list unknown extensions at the end.    
 *** Example:
     * inserting into a specified file:
-        special lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"
-    * inserting into the files with the specified extension:
-        special lgpl "C:\\Code" "" ".py" "#" 2023 "imlystyi" "ilt - insert license text!"\n''')
+        special file lgpl "C:\\Code\\code.py" "#" 2023 "imlystyi" "ilt - insert license text!"
+    * inserting into the files with the specified extension (without keys):
+        special ext lgpl "C:\\Code" ".py" "#" 2023 "imlystyi" "ilt - insert license text!"
+    * inserting into the files with the specified extension (with "-d" key and ignored directories):
+        special ext lgpl "C:\\Code" ".py" "#" 2023 "imlystyi" "ilt - insert license text!" ".idea tsProj" -d\n''')
 
     def _display_items(self, items: list):
         for item in items:
             self.stdout.write(item + '\n')
+
+    def _get_ignored_dirs(self, folders: str) -> list[str]:
+        return folders.split(' ')
+
+    def _get_ignored_exts(self, exts: str) -> list[str]:
+        return exts.split(' ')
 
     def _get_keys(self, args: str) -> list[str]:
         return [kk for kk in args.split() if kk[0] == '-']
@@ -398,11 +435,5 @@ relationship with you.
         found = findall(r'"([^"]+)"|(\S+)', args)
         matches = tuple(match[0] or match[1] for match in found)
         return tuple(match for match in matches if match[0] != '-')
-
-    def _get_ignored_exts(self, exts: str) -> list[str]:
-        return exts.split(' ')
-
-    def _get_ignored_folders(self, folders: str) -> list[str]:
-        return folders.split(' ')
 
     # endregion
