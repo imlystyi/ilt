@@ -20,22 +20,17 @@ If you license your program, **ilt** will help you insert the text (header) of t
  
  ## Functionality
  - Automatic insertion of license texts into source code files (if the extension of such a file and the format of comments are known by **ilt**)
- - Special insertion if you want to change startline format (or if the extension of such a file and the format of comments aren't known by **ilt**)
+ - Special insertion if you want to change startline format (or if the extension of such a file and the format of comments are not known by **ilt**)
+ - Ignoring specified directories and file extensions
 
 ## How can I use it?
 - If you want to do automatic insertion, use this command:
-```
-auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_folders>" "<ignored_exts>" <keys>
-```
-
+`auto <license_name> "<path>" <year> "<copyright_holder>" "<special_line>" "<ignored_dirs>" "<ignored_exts>" <keys>`
 - If you want to do special insertion into the specified file, use this command:
-```
-special <license_name> "<path_to_file>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
-```
+`special file <license_name> "<path>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"`
 - If you want to do special insertion into the files with the specified extension, use this command:
-```
-special <license_name> "<path_to_root_folder>" "ignored_folders" "<extension>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"
-```
+`special ext <license_name> "<path>" "<ext>" "<comments_format>" <year> "<copyright_holder>" "<special_line>"  
+"<ignored_folders>"`
 - **Use the `help` command to view detailed help for all commands.**
 
 ## Avaliable licenses (and their texts)
